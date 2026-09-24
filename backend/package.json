@@ -1,0 +1,20 @@
+{
+  "name": "adaptive-ai-coding-mentor-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Backend for Adaptive AI Coding Mentor - graduated hint controller, scoring service, Ollama/Qwen integration.",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "seed": "node src/data/seed.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.1",
+    "node-fetch": "^3.3.2"
+  }
+}
