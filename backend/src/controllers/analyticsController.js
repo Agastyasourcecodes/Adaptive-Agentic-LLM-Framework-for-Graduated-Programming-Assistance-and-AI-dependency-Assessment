@@ -1,9 +1,71 @@
 import ProblemAttempt from "../models/ProblemAttempt.js";
 import scoringService, { CONFIG } from "../services/scoringService.js";
+import { LEVELS } from "./hintController.js";
 
 /** Fetch full chronological history for a student. */
 export async function getHistory(studentId) {
   return ProblemAttempt.find({ studentId }).sort({ timestamp: 1 }).lean();
+}
+
+/**
+ * Per-problem H / I / R / T / ADS breakdown, alongside the original problem
+ * statement the student pasted (stored verbatim in `problem` at submit time —
+ * see hintController.buildHistoryRecord). Unlike the dashboard's aggregate
+ * scores (which average over the evaluation window), every number here is
+ * computed for that ONE attempt only, so a student or reviewer can see
+ * exactly which problem drove the aggregate up or down.
+ *
+ * R is aggregate-shaped by definition ("problems needing AI in last N"), so
+ * its per-problem value is a binary indicator (100 if this attempt used any
+ * AI iteration, else 0) — the same predicate aggregateR averages over the
+ * window.
+ */
+function perProblemMetrics(record) {
+  const H = scoringService.highestHintScore(record);
+  const I = scoringService.aiInteractionScore(record);
+  const T = scoringService.timeToHelpScore(record);
+  const R = record.aiIterations > 0 ? 100 : 0;
+  const { H: wH, I: wI, R: wR, T: wT } = CONFIG.adsWeights;
+  const ADS = Math.round((wH * H + wI * I + wR * R + wT * T) * 100) / 100;
+  return {
+    H: Math.round(H * 100) / 100,
+    I: Math.round(I * 100) / 100,
+    R,
+    T: Math.round(T * 100) / 100,
+    ADS
+  };
+}
+
+function toProblemPayload(record) {
+  return {
+    id: String(record._id),
+    problemStatement: record.problem, // full text as pasted by the student
+    attempts: record.attempts,
+    aiIterations: record.aiIterations,
+    highestHint: record.highestHint,
+    highestHintLabel: record.highestHint > 0 ? `L${record.highestHint} — ${LEVELS[record.highestHint]}` : "None",
+    timeToFirstHelp: record.timeToFirstHelp,
+    solved: record.solved,
+    timestamp: record.timestamp,
+    metrics: perProblemMetrics(record)
+  };
+}
+
+/** GET-able list: every problem attempt for a student, most recent first. */
+export async function getProblemMetrics(studentId) {
+  const history = await getHistory(studentId);
+  return {
+    weights: CONFIG.adsWeights,
+    count: history.length,
+    problems: history.map(toProblemPayload).reverse()
+  };
+}
+
+/** GET-able single record, by its Mongo _id, for a detail/expanded view. */
+export async function getProblemMetricById(studentId, id) {
+  const record = await ProblemAttempt.findOne({ _id: id, studentId }).lean();
+  if (!record) return null;
+  return toProblemPayload(record);
 }
 
 /**
@@ -70,4 +132,4 @@ export async function getDashboard(studentId) {
   };
 }
 
-export default { getHistory, getDashboard };
+export default { getHistory, getDashboard, getProblemMetrics, getProblemMetricById };

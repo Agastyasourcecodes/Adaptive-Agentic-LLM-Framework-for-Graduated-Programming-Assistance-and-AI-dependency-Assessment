@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import Dashboard from "../components/Dashboard";
 import ResearchPanel from "../components/ResearchPanel";
+import ProblemMetricsPanel from "../components/ProblemMetricsPanel";
 import AdsCompositionDiagram from "../components/diagrams/AdsCompositionDiagram";
 import api from "../api/client";
 
@@ -40,6 +41,11 @@ export default function DashboardPage() {
           </p>
         )}
         <Dashboard data={dashboard} loading={loading} />
+      </section>
+
+      <section>
+        <h2 className="font-serif text-lg text-ink mb-4">Problem Breakdown</h2>
+        <ProblemMetricsPanel />
       </section>
 
       <section>

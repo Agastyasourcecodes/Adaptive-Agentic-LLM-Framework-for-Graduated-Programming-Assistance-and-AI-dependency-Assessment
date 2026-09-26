@@ -38,7 +38,12 @@ export const api = {
 
   getProviders: () => request("/mentor/providers"),
 
-  getDashboard: () => request(`/analytics/dashboard?studentId=${STUDENT_ID}`)
+  getDashboard: () => request(`/analytics/dashboard?studentId=${STUDENT_ID}`),
+
+  // Per-problem H / I / R / T / ADS breakdown + original problem statement.
+  getProblemMetrics: () => request(`/analytics/problems?studentId=${STUDENT_ID}`),
+
+  getProblemMetricById: (id) => request(`/analytics/problems/${id}?studentId=${STUDENT_ID}`)
 };
 
 export default api;
