@@ -14,7 +14,7 @@ const PLANNED = {
 };
 
 const KIND_LABEL = { llm: "LLM", rules: "rules", deterministic: "deterministic" };
-const PROVIDER_NAME = { qwen: "Qwen", gemini: "Gemini", grok: "Grok" };
+const PROVIDER_NAME = { qwen: "Qwen", gemini: "Gemini", groq: "Groq" };
 
 function Dot({ status }) {
   const cls = {

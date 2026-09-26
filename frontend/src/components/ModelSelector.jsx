@@ -1,7 +1,7 @@
 const FALLBACK_LIST = [
   { id: "qwen", label: "Qwen (Local)", vendor: "Ollama", model: "qwen2.5-coder", configured: true, cooldownSeconds: 0, isDefault: true },
   { id: "gemini", label: "Gemini", vendor: "Google", model: "gemini", configured: false, cooldownSeconds: 0 },
-  { id: "grok", label: "Grok", vendor: "xAI", model: "grok", configured: false, cooldownSeconds: 0 }
+  { id: "groq", label: "Groq", vendor: "groq", model: "groq", configured: false, cooldownSeconds: 0 }
 ];
 
 function status(p) {

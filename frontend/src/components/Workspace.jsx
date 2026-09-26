@@ -9,7 +9,7 @@ const LEVEL_NAMES = {
   5: "Pseudocode",
   6: "Implementation"
 };
-const NAME = { qwen: "Qwen", gemini: "Gemini", grok: "Grok" };
+const NAME = { qwen: "Qwen", gemini: "Gemini", groq: "Groq" };
 
 function ProviderChip({ info }) {
   if (!info) return null;
