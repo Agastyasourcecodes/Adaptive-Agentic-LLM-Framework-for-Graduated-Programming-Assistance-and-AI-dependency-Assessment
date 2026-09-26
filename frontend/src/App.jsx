@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Header from "./components/Header";
+import HomePage from "./pages/HomePage";
 import DashboardPage from "./pages/DashboardPage";
 import WorkspacePage from "./pages/WorkspacePage";
 
@@ -8,7 +9,8 @@ export default function App() {
     <div className="min-h-screen bg-paper">
       <Header />
       <Routes>
-        <Route path="/" element={<DashboardPage />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/workspace" element={<WorkspacePage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

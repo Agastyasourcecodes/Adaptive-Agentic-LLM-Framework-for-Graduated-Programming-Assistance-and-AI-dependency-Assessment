@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import TrendChart from "./charts/TrendChart";
 import HintDistributionChart from "./charts/HintDistributionChart";
 import HistoryTable from "./HistoryTable";
@@ -19,10 +20,30 @@ export default function Dashboard({ data, loading }) {
     return <p className="text-sm text-muted">Loading dashboard…</p>;
   }
   if (!data) {
-    return <p className="text-sm text-muted">No data available. Seed sample data or solve a problem to begin.</p>;
+    return <p className="text-sm text-muted">No data available. Is the API server running?</p>;
   }
 
   const { scores, problemsSolved, totalProblems, distribution, trends, history } = data;
+
+  if (totalProblems === 0) {
+    return (
+      <div className="card text-center py-10">
+        <div className="card-title mb-2">No problems recorded yet</div>
+        <p className="text-sm text-ink max-w-md mx-auto mb-5">
+          Solve — or just attempt — a problem in the Workspace and your Coding Skill, AI Dependency
+          (ADS), and H / I / R / T scores will appear here automatically.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Link to="/workspace" className="btn-primary">
+            Open Workspace →
+          </Link>
+          <Link to="/" className="btn-secondary">
+            What do these metrics mean?
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

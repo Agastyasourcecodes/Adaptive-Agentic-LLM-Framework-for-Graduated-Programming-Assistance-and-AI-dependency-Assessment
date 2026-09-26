@@ -7,11 +7,9 @@ import { listProviders, DEFAULT_PROVIDER } from "../services/llmRouter.js";
 const router = express.Router();
 
 function problemKeyFor(problemText) {
-  // Simple stable key for session lookup (first 80 chars, normalized).
   return problemText.trim().slice(0, 80).toLowerCase();
 }
 
-/** Compact provider summary attached to every LLM response. */
 function providerInfo(meta) {
   return {
     requested: meta.requested,
@@ -23,15 +21,24 @@ function providerInfo(meta) {
   };
 }
 
-/** GET /api/mentor/providers — which models are available (no secrets). */
+/**
+ * Upsert the live ProblemAttempt row for this studentId + problemKey.
+ * Only the problem statement + the scoring parameters are ever saved —
+ * never the student's code. Called after every analyze/hint/submit call.
+ */
+async function persistLiveAttempt(studentId, key, session, solved = false) {
+  const record = hintController.buildLiveRecord(studentId, key, session, solved);
+  return ProblemAttempt.findOneAndUpdate(
+    { studentId, problemKey: key },
+    record,
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+}
+
 router.get("/providers", (req, res) => {
   res.json({ default: DEFAULT_PROVIDER, providers: listProviders() });
 });
 
-/**
- * POST /api/mentor/analyze
- * Body: { studentId, problemText, code, provider? }
- */
 router.post("/analyze", async (req, res) => {
   try {
     const { studentId, problemText, code, provider } = req.body;
@@ -40,6 +47,8 @@ router.post("/analyze", async (req, res) => {
     }
     const key = problemKeyFor(problemText);
     const out = await runAnalysisPipeline({ studentId, key, problemText, code, provider });
+
+    await persistLiveAttempt(studentId, key, out.session, false);
 
     res.json({
       analysis: out.analysis,
@@ -56,11 +65,6 @@ router.post("/analyze", async (req, res) => {
   }
 });
 
-/**
- * POST /api/mentor/hint
- * Body: { studentId, problemText, code, provider? }
- * Level Controller decides the level; the selected model writes the text.
- */
 router.post("/hint", async (req, res) => {
   try {
     const { studentId, problemText, code, provider } = req.body;
@@ -69,6 +73,8 @@ router.post("/hint", async (req, res) => {
     }
     const key = problemKeyFor(problemText);
     const out = await runHintPipeline({ studentId, key, problemText, code, provider });
+
+    await persistLiveAttempt(studentId, key, out.session, false);
 
     res.json({
       level: out.level,
@@ -85,10 +91,6 @@ router.post("/hint", async (req, res) => {
   }
 });
 
-/**
- * POST /api/mentor/submit
- * Body: { studentId, problemText, solved, giveUp }
- */
 router.post("/submit", async (req, res) => {
   try {
     const { studentId, problemText, solved, giveUp } = req.body;
@@ -99,15 +101,16 @@ router.post("/submit", async (req, res) => {
     const session = hintController.getOrCreateSession(studentId, key, problemText);
     hintController.recordAttempt(session);
 
-    if (solved || giveUp) {
-      const record = hintController.buildHistoryRecord(studentId, key, session, Boolean(solved));
-      const saved = await ProblemAttempt.create(record);
+    const finalized = Boolean(solved) || Boolean(giveUp);
+    const saved = await persistLiveAttempt(studentId, key, session, Boolean(solved));
+
+    if (finalized) {
       hintController.clearSession(studentId, key);
-      return res.json({ finalized: true, record: saved });
     }
 
     res.json({
-      finalized: false,
+      finalized,
+      record: saved,
       attempts: session.attempts,
       hintsGiven: session.hintsGiven
     });
